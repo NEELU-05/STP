@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stock Movement Direction Predictor - Predict stock price direction using machine learning and technical indicators">
+    <title>Stock Movement Direction Predictor</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="header-title">
+                <span class="gradient-text">Stock Movement Direction Predictor</span>
+            </h1>
+            <p class="header-subtitle">
+                Predict stock price direction using machine learning and technical indicators
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Control Panel -->
+            <section class="control-panel card">
+                <h2 class="section-title">Select Stock & Predict</h2>
+                <div class="control-grid">
+                    <div class="form-group">
+                        <label for="stockSelect">Stock Symbol</label>
+                        <select id="stockSelect" class="stock-select">
+                            <option value="">Loading stocks...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button id="predictBtn" class="btn btn-primary" disabled>
+                            <span class="btn-text">Predict Direction</span>
+                            <span class="spinner" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section" style="display: none;">
+                
+                <!-- Main Results Card -->
+                <div class="results-grid">
+                    <!-- Accuracy Card -->
+                    <div class="card result-card">
+                        <h3 class="card-title">Model Accuracy</h3>
+                        <div class="accuracy-display">
+                            <div class="circular-progress">
+                                <svg class="progress-ring" width="120" height="120">
+                                    <circle class="progress-ring-circle-bg" cx="60" cy="60" r="52"></circle>
+                                    <circle id="progressCircle" class="progress-ring-circle" cx="60" cy="60" r="52"></circle>
+                                </svg>
+                                <div class="progress-text">
+                                    <span id="accuracyValue" class="accuracy-value">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direction Card -->
+                    <div class="card result-card">
+                        <h3 class="card-title">Predicted Direction</h3>
+                        <div class="direction-display">
+                            <div id="directionBadge" class="direction-badge">
+                                <span id="directionIcon" class="direction-icon">↑</span>
+                                <span id="directionText" class="direction-text">Up</span>
+                            </div>
+                            <div class="confidence-meter">
+                                <label>Confidence</label>
+                                <div class="confidence-bar">
+                                    <div id="confidenceBar" class="confidence-fill"></div>
+                                </div>
+                                <span id="confidenceValue" class="confidence-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Cards -->
+                <div class="metrics-grid">
+                    <div class="card metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-content">
+                            <h4 class="metric-label">Precision</h4>
+                            <p id="precisionValue" class="metric-value">0%</p>
+                        </div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon">🎯</div>
+                        <div class="metric-content">
+                            <h4 class="metric-label">Recall</h4>
+                            <p id="recallValue" class="metric-value">0%</p>
+                        </div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-content">
+                            <h4 class="metric-label">F1-Score</h4>
+                            <p id="f1Value" class="metric-value">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualizations -->
+                <div class="visualization-section card">
+                    <h2 class="section-title">Visualizations</h2>
+                    
+                    <!-- Tab Navigation -->
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="predictions">Predictions Timeline</button>
+                        <button class="tab-btn" data-tab="confusion">Confusion Matrix</button>
+                        <button class="tab-btn" data-tab="importance">Feature Importance</button>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <div id="predictionsTab" class="tab-pane active">
+                            <canvas id="predictionsChart"></canvas>
+                        </div>
+                        <div id="confusionTab" class="tab-pane">
+                            <div class="confusion-matrix-container">
+                                <canvas id="confusionChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="importanceTab" class="tab-pane">
+                            <canvas id="importanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Info -->
+                <div class="card info-card">
+                    <h3 class="card-title">Dataset Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Stock Symbol:</span>
+                            <span id="infoSymbol" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Samples:</span>
+                            <span id="infoSamples" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Test Samples:</span>
+                            <span id="infoTestSamples" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date Range:</span>
+                            <span id="infoDateRange" class="info-value">-</span>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Stock Movement Direction Predictor | Built with Python, Flask & Machine Learning</p>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
